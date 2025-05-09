@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Calculadora Estratégica de Faltas (Pro)</title>
+<link rel="stylesheet" href="estilos.css">
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: #f4f4f4;
+  padding: 20px;
+}
+.container {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  max-width: 600px;
+  margin: auto;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+input, button {
+  padding: 8px;
+  margin: 5px 0 15px 0;
+  width: 100%;
+}
+button {
+  background-color: #0077cc;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+button:hover {
+  background-color: #005fa3;
+}
+p strong {
+  color: #0077cc;
+}
+.error {
+  color: red;
+  font-weight: bold;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Calculadora Estratégica de Faltas</h2>
+
+    <form>
+        <label for="fechaInicio">Fecha de inicio de clases:</label>
+        <input type="date" id="fechaInicio" required>
+
+        <label for="fechaFin">Fecha de fin de clases:</label>
+        <input type="date" id="fechaFin" required>
+
+        <label for="diasPorSemana">Días por semana que tienes la clase:</label>
+        <input type="number" id="diasPorSemana" value="5" required>
+
+        <label for="asistenciaMinima">Asistencia mínima exigida (%):</label>
+        <input type="number" id="asistenciaMinima" value="80" required>
+
+        <label for="asistenciaActual">Tu porcentaje actual de asistencia (%):</label>
+        <input type="number" id="asistenciaActual" placeholder="Ejemplo: 92" required>
+
+        <button type="button" onclick="calcularEstrategia()">Calcular Estrategia</button>
+        <button type="button" onclick="llenarDatosUTJ()">Llenar datos UTJ</button>
+    </form>
+
+    <div id="resultado"></div>
+</div>
+
+<script>
+function calcularEstrategia() {
+    const fechaInicio = new Date(document.getElementById("fechaInicio").value);
+    const fechaFin = new Date(document.getElementById("fechaFin").value);
+    const diasPorSemana = parseInt(document.getElementById("diasPorSemana").value);
+    const asistenciaMinima = parseFloat(document.getElementById("asistenciaMinima").value);
+    const asistenciaActual = parseFloat(document.getElementById("asistenciaActual").value);
+
+    if (isNaN(fechaInicio) || isNaN(fechaFin) || diasPorSemana <= 0 || asistenciaMinima <= 0 || asistenciaActual < 0) {
+        document.getElementById("resultado").innerHTML = "<p class='error'>Completa todos los campos correctamente.</p>";
+        return;
+    }
+
+    const hoy = new Date();
+    if (hoy < fechaInicio) {
+        document.getElementById("resultado").innerHTML = "<p class='error'>El ciclo aún no inicia.</p>";
+        return;
+    }
+
+    const msPorDia = 1000 * 60 * 60 * 24;
+    const totalSemanas = Math.ceil((fechaFin - fechaInicio) / msPorDia / 7);
+    const semanasCursadas = Math.floor((hoy - fechaInicio) / msPorDia / 7);
+    const semanasRestantes = totalSemanas - semanasCursadas;
+
+    const clasesTotales = totalSemanas * diasPorSemana;
+    const clasesDadas = semanasCursadas * diasPorSemana;
+    const clasesRestantes = clasesTotales - clasesDadas;
+
+    const asistenciasRequeridas = Math.ceil(clasesTotales * (asistenciaMinima / 100));
+    const faltasPermitidas = clasesTotales - asistenciasRequeridas;
+
+    // Calcular faltas consumidas a partir del porcentaje actual
+    const asistenciasHastaHoy = Math.round(clasesDadas * (asistenciaActual / 100));
+    const faltasConsumidas = clasesDadas - asistenciasHastaHoy;
+    const faltasRestantes = faltasPermitidas - faltasConsumidas;
+
+    const faltasPorSemana = (faltasRestantes / semanasRestantes).toFixed(2);
+
+    let mensaje = `
+        <p>Clases totales: <strong>${clasesTotales}</strong></p>
+        <p>Clases debiste tener hasta hoy: <strong>${clasesDadas}</strong></p>
+        <p>Asistencias mínimas necesarias (para ${asistenciaMinima}%): <strong>${asistenciasRequeridas}</strong></p>
+        <p>Máx. faltas permitidas en todo el curso: <strong>${faltasPermitidas}</strong></p>
+        <hr>
+        <p>Con tu asistencia actual de <strong>${asistenciaActual}%</strong>:</p>
+        <p>Asistencias hasta hoy: <strong>${asistenciasHastaHoy}</strong></p>
+        <p>Faltas consumidas hasta hoy: <strong>${faltasConsumidas}</strong></p>
+        <p>Faltas que puedes gastar todavía: <strong>${faltasRestantes >= 0 ? faltasRestantes : 0}</strong></p>
+        <p>Proyección: puedes faltar aprox. <strong>${faltasPorSemana}</strong> veces por semana hasta terminar.</p>
+    `;
+
+    if (faltasRestantes < 0) {
+        mensaje += "<p class='error'>¡Ya superaste las faltas máximas! Debes asistir a todo para no reprobar.</p>";
+    }
+
+    document.getElementById("resultado").innerHTML = mensaje;
+}
+
+function llenarDatosUTJ() {
+    document.getElementById("fechaInicio").value = "2025-05-02";
+    document.getElementById("fechaFin").value = "2025-08-29";
+    document.getElementById("diasPorSemana").value = 5;
+    document.getElementById("asistenciaMinima").value = 80;
+
+    alert("Datos UTJ cargados:\nInicio: 2 mayo 2025\nFin: 29 agosto 2025\nDías por semana: 5");
+}
+</script>
+
+</body>
+</html>
